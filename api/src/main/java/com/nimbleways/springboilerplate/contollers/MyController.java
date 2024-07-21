@@ -3,6 +3,7 @@ package com.nimbleways.springboilerplate.contollers;
 import com.nimbleways.springboilerplate.dto.product.ProcessOrderResponse;
 import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.FlashSaleProduct;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.services.implementations.ProductService;
@@ -42,34 +43,58 @@ public class MyController {
         Set<Product> products = order.getItems();
         for (Product p : products) {
             if (p.getType().equals("NORMAL")) {
-                if (p.getAvailable() > 0) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
-                } else {
-                    int leadTime = p.getLeadTime();
-                    if (leadTime > 0) {
-                        ps.notifyDelay(leadTime, p);
-                    }
-                }
+                handleNormalProduct(p);
             } else if (p.getType().equals("SEASONAL")) {
-                // Add new season rules
-                if ((LocalDate.now().isAfter(p.getSeasonStartDate()) && LocalDate.now().isBefore(p.getSeasonEndDate())
-                        && p.getAvailable() > 0)) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
-                } else {
-                    ps.handleSeasonalProduct(p);
-                }
+                handleSeasonalProduct(p);
             } else if (p.getType().equals("EXPIRABLE")) {
-                if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now())) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
-                } else {
-                    ps.handleExpiredProduct(p);
-                }
+                handleExpirableProduct(p);
+            } else if (p.getType().equals("FLASHSALE")) {
+                handleFlashSaleProduct((FlashSaleProduct) p);
+            } else {
+                throw new IllegalArgumentException("Unknown product type: " + p.getType());
             }
         }
-
         return new ProcessOrderResponse(order.getId());
     }
+
+
+    private void handleNormalProduct(Product product) {
+        if (product.getAvailable() > 0) {
+            product.setAvailable(product.getAvailable() - 1);
+            pr.save(product);
+        } else {
+            int leadTime = product.getLeadTime();
+            if (leadTime > 0) {
+                ps.notifyDelay(leadTime, product);
+            }
+        }
+    }
+
+    private void handleSeasonalProduct(Product product) {
+        if (LocalDate.now().isAfter(product.getSeasonStartDate()) && LocalDate.now().isBefore(product.getSeasonEndDate()) && product.getAvailable() > 0) {
+            product.setAvailable(product.getAvailable() - 1);
+            pr.save(product);
+        } else {
+            ps.handleSeasonalProduct(product);
+        }
+    }
+
+    private void handleExpirableProduct(Product product) {
+        if (product.getAvailable() > 0 && product.getExpiryDate().isAfter(LocalDate.now())) {
+            product.setAvailable(product.getAvailable() - 1);
+            pr.save(product);
+        } else {
+            ps.handleExpiredProduct(product);
+        }
+    }
+
+    private void handleFlashSaleProduct(FlashSaleProduct flashSaleProduct) {
+        if (LocalDate.now().isBefore(flashSaleProduct.getFlashSaleEndDate()) && flashSaleProduct.getAvailable() > 0) {
+            flashSaleProduct.setAvailable(flashSaleProduct.getAvailable() - 1);
+            pr.save(flashSaleProduct);
+        } else {
+            ps.handleFlashSaleEnd(flashSaleProduct);
+        }
+    }
+
 }

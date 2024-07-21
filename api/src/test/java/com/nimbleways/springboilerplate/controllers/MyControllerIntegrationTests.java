@@ -2,6 +2,7 @@ package com.nimbleways.springboilerplate.controllers;
 
 import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.FlashSaleProduct;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.services.implementations.NotificationService;
@@ -74,6 +75,8 @@ public class MyControllerIntegrationTests {
                                 LocalDate.now().plusDays(58)));
                 products.add(new Product(null, 15, 30, "SEASONAL", "Grapes", null, LocalDate.now().plusDays(180),
                                 LocalDate.now().plusDays(240)));
-                return products;
+                products.add(new FlashSaleProduct(null, 15, 30, "FLASHSALE", "Laptop", null, null,null, LocalDate.now().plusDays(2), 50));
+
+            return products;
         }
 }

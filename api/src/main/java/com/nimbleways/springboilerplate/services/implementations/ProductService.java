@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.FlashSaleProduct;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 
 @Service
@@ -44,6 +45,13 @@ public class ProductService {
             ns.sendExpirationNotification(p.getName(), p.getExpiryDate());
             p.setAvailable(0);
             pr.save(p);
+        }
+    }
+    public void handleFlashSaleEnd(FlashSaleProduct flashSaleProduct) {
+        if (LocalDate.now().isAfter(flashSaleProduct.getFlashSaleEndDate()) || flashSaleProduct.getAvailable() <= 0) {
+            ns.sendOutOfStockNotification(flashSaleProduct.getName());
+            flashSaleProduct.setAvailable(0);
+            pr.save(flashSaleProduct);
         }
     }
 }
